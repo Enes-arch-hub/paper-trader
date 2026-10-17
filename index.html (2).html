@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paper Trader</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#16181d;--mute:#6a6f7a;--line:#e4e2da;--up:#0f9d58;--down:#d93f3f;--acc:#3b5bdb;--onacc:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101216;--card:#181b21;--ink:#eceef2;--mute:#9aa1ae;--line:#2a2f38;--up:#3ddc84;--down:#ff6b6b;--acc:#8aa4ff;--onacc:#101216}}
+:root[data-theme="dark"]{--bg:#101216;--card:#181b21;--ink:#eceef2;--mute:#9aa1ae;--line:#2a2f38;--up:#3ddc84;--down:#ff6b6b;--acc:#8aa4ff;--onacc:#101216}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;line-height:1.4}
+.num,.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+main{max-width:1000px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+h1{font-size:1.3rem;margin:0 0 2px}
+.sub{color:var(--mute);font-size:.85rem}
+.stats{display:flex;gap:22px;flex-wrap:wrap}
+.stat small{display:block;color:var(--mute);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.stat b{font-size:1.25rem}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:820px){.grid{grid-template-columns:1.1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:0 0 10px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th{font-weight:600;color:var(--mute);text-align:right;font-size:.75rem;padding:4px 6px}
+td{padding:9px 6px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tr.row{cursor:pointer}
+tr.row:hover td,tr.sel td{background:color-mix(in srgb,var(--acc) 9%,transparent)}
+tr.row:focus-visible{outline:2px solid var(--acc)}
+.up{color:var(--up)}.down{color:var(--down)}
+svg.spark{width:70px;height:22px;vertical-align:middle}
+svg.big{width:100%;height:130px;display:block}
+.pricebig{font-size:1.8rem;font-weight:600}
+.qty{display:flex;gap:8px;margin:12px 0 8px;flex-wrap:wrap}
+input{font:inherit;width:100px;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+button{font:inherit;font-weight:600;padding:10px 16px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.buy{background:var(--up);border-color:var(--up);color:#fff}
+.sell{background:var(--down);border-color:var(--down);color:#fff}
+.btns{display:flex;gap:8px}.btns button{flex:1}
+#msg{min-height:1.3em;font-size:.88rem;margin:8px 0 0;color:var(--mute)}
+.empty{color:var(--mute);font-size:.9rem;padding:6px 0}
+footer{margin-top:16px;color:var(--mute);font-size:.8rem;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--bg:#0e0e0e;--card:#151717;--ink:#f2f3f3;--mute:#9a9fa3;--line:#2a2d2e;--up:#2fbf9b;--down:#f0616d;--acc:#ff444f;--onacc:#fff}
+.wal{display:flex;gap:8px;margin-top:10px}.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.wm{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.wbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;width:100%;max-width:380px}
+.wbox h2{margin:0 0 8px;font-size:1.1rem}.wide{width:100%;margin:4px 0 10px}.hidden{display:none!important}
+select{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div><h1>Paper Trader</h1><div class="sub">Demo platform. All money and prices are simulated.</div><div class="wal"><button class="acc" id="dep">Deposit</button><button id="wdr">Withdraw</button></div></div>
+    <div class="stats">
+      <div class="stat"><small>Total value</small><b class="num" id="eq">$0</b></div>
+      <div class="stat"><small>Cash</small><b class="num" id="cash">$0</b></div>
+      <div class="stat"><small>Profit / loss</small><b class="num" id="pl">$0</b></div>
+    </div>
+  </header>
+  <div class="grid">
+    <section class="card"><h2>Synthetic indices · pick a volatility 1–10</h2><div class="scroll"><table><thead><tr><th>Stock</th><th>Price</th><th>Change</th><th>Trend</th></tr></thead><tbody id="mkt"></tbody></table></div></section>
+    <section class="card" aria-label="Trade">
+      <h2 id="tname">Trade</h2>
+      <div class="pricebig num" id="tprice"></div>
+      <svg class="big" id="tchart" viewBox="0 0 300 100" preserveAspectRatio="none" role="img" aria-label="Price chart"></svg>
+      <div id="vs" class="hidden"><label class="sub" for="vr">Custom volatility: <b id="vl">5</b></label><input id="vr" type="range" min="1" max="10" value="5" style="width:100%"></div>
+      <div class="qty"><label class="sub" for="q" style="align-self:center">Shares</label><input id="q" type="number" min="1" step="1" value="1" inputmode="numeric"><button id="max">Max buy</button></div>
+      <div class="btns"><button class="buy" id="buy">Buy</button><button class="sell" id="sell">Sell</button></div>
+      <p id="msg" role="status" aria-live="polite"></p>
+      <h2 style="margin-top:16px">Rise / Fall</h2>
+      <div class="qty"><label class="sub" for="stk" style="align-self:center">Stake $</label><input id="stk" type="number" min="1" step="1" value="10"><button class="qs" data-v="10">10</button><button class="qs" data-v="50">50</button><button class="qs" data-v="100">100</button><button class="qs" data-v="half">Half</button></div>
+      <div class="qty"><label class="sub" for="tk" style="align-self:center">Ticks</label><select id="tk"><option>3</option><option selected>5</option><option>10</option></select></div>
+      <div class="btns"><button class="buy" id="rise">Rise</button><button class="sell" id="fall">Fall</button></div>
+      <div class="btns" style="margin-top:8px"><button id="even">Even digit</button><button id="odd">Odd digit</button></div>
+      <div class="sub" style="margin-top:4px">Even / Odd bets on the last digit of the price when the ticks end.</div>
+      <div id="ctr" class="sub" style="margin-top:8px"></div>
+    </section>
+    <section class="card"><h2>Your holdings</h2><div class="scroll" id="hold"></div></section>
+    <section class="card"><h2>Contract results</h2><div id="stats" class="scroll"></div></section>
+    <section class="card"><h2>Balance history</h2><svg class="big" id="eqc" viewBox="0 0 300 100" preserveAspectRatio="none" role="img" aria-label="Balance history"></svg></section>
+    <section class="card"><h2>Recent trades</h2><div class="scroll" id="hist"></div></section>
+  </div>
+  <div id="wm" class="wm hidden" role="dialog" aria-modal="true" aria-labelledby="wt"><div class="wbox"><h2 id="wt"></h2><div id="wb"></div></div></div>
+  <footer><span>Not real money and not financial advice.</span><button id="snd">Sound on</button> <button id="reset">Reset account</button></footer>
+</main>
+<script>
+(function(){
+var START=10000,KEY='paper-trader-v2';
+var ST=[];for(var i=1;i<=10;i++)ST.push({s:'VOL'+i,n:'Volatility '+i+' Index · '+(i<=3?'low':i<=7?'medium':'high'),p:1000+i*37,v:.0015*i});ST.push({s:'CUST',n:'Custom Index · you set volatility',p:1000,v:.0075});
+var $=function(i){return document.getElementById(i)};
+var acct={cash:START,hold:{},hist:[]},sel='VOL5',px={},ser={},open={};
+try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&typeof sv.cash==='number')acct=sv}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(acct))}catch(e){}}
+function randn(){return Math.sqrt(-2*Math.log(1-Math.random()))*Math.cos(2*Math.PI*Math.random())}
+function step(x){px[x.s]=Math.max(1,px[x.s]*Math.exp(.0002+x.v*randn()))}
+ST.forEach(function(x){px[x.s]=x.p;ser[x.s]=[];for(var i=0;i<60;i++){step(x);ser[x.s].push(px[x.s])}open[x.s]=ser[x.s][0]});
+var usd=function(n){return n.toLocaleString('en-US',{style:'currency',currency:'USD'})};
+var pct=function(n){return(n>=0?'+':'')+n.toFixed(2)+'%'};
+var cls=function(n){return n>=0?'up':'down'};
+function line(a,w,h){
+  var mn=Math.min.apply(null,a),mx=Math.max.apply(null,a),r=(mx-mn)||1;
+  return a.map(function(v,i){return(i/(a.length-1)*w).toFixed(1)+','+(h-4-(v-mn)/r*(h-8)).toFixed(1)}).join(' ');
+}
+function spark(a,w,h){var c=a[a.length-1]>=a[0]?'var(--up)':'var(--down)';return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="'+c+'" stroke-width="2" points="'+line(a,w,h)+'"/></svg>'}
+function equity(){var e=acct.cash;(acct.cts||[]).forEach(function(c){e+=c.st});for(var s in acct.hold)e+=acct.hold[s].qty*px[s];return e}
+function render(){
+  var eq=equity(),pl=eq-START;
+  $('eq').textContent=usd(eq);$('cash').textContent=usd(acct.cash);
+  $('pl').textContent=(pl>=0?'+':'')+usd(pl);$('pl').className='num '+cls(pl);
+  $('mkt').innerHTML=ST.map(function(x){
+    var c=(px[x.s]/open[x.s]-1)*100;
+    return '<tr class="row'+(x.s===sel?' sel':'')+'" tabindex="0" data-s="'+x.s+'"><td><b>'+x.s+'</b><div class="sub">'+x.n+'</div></td><td class="num">'+usd(px[x.s])+'</td><td class="num '+cls(c)+'">'+pct(c)+'</td><td>'+spark(ser[x.s],70,22)+'</td></tr>'}).join('');
+  var hs=Object.keys(acct.hold);
+  $('hold').innerHTML=hs.length?'<table><thead><tr><th>Stock</th><th>Shares</th><th>Avg cost</th><th>Value</th><th>P/L</th></tr></thead><tbody>'+hs.map(function(s){
+    var h=acct.hold[s],p=(px[s]-h.avg)*h.qty;
+    return '<tr><td><b>'+s+'</b></td><td class="num">'+h.qty+'</td><td class="num">'+usd(h.avg)+'</td><td class="num">'+usd(h.qty*px[s])+'</td><td class="num '+cls(p)+'">'+(p>=0?'+':'')+usd(p)+'</td></tr>'}).join('')+'</tbody></table>':'<div class="empty">Nothing yet. Pick a stock and buy some shares.</div>';
+  $('hist').innerHTML=acct.hist.length?'<table><tbody>'+acct.hist.slice(0,8).map(function(t){
+    return '<tr><td class="'+(t.side==='BUY'?'up':'down')+'"><b>'+t.side+'</b></td><td>'+t.qty+' '+t.s+'</td><td class="num">@ '+usd(t.price)+'</td></tr>'}).join('')+'</tbody></table>':'<div class="empty">Your trades will show up here.</div>';
+  trade();
+}
+function trade(){
+  var x=ST.filter(function(z){return z.s===sel})[0],a=ser[sel],up=a[a.length-1]>=a[0];
+  $('tname').textContent=x.s+' · '+x.n;
+  $('tprice').textContent=usd(px[sel]);$('vs').classList.toggle('hidden',sel!=='CUST');
+  $('tchart').innerHTML='<polyline fill="none" stroke="'+(up?'var(--up)':'var(--down)')+'" stroke-width="2" vector-effect="non-scaling-stroke" points="'+line(a,300,100)+'"/>';
+}
+function say(t,bad){var m=$('msg');m.textContent=t;m.style.color=bad?'var(--down)':'var(--mute)'}
+function qty(){var q=parseInt($('q').value,10);return q>0?q:0}
+function order(side){
+  var q=qty(),p=px[sel];
+  if(!q)return say('Enter a whole number of shares.',true);
+  var h=acct.hold[sel];
+  if(side==='BUY'){
+    if(q*p>acct.cash)return say('Not enough cash. You can afford '+Math.floor(acct.cash/p)+' shares.',true);
+    acct.cash-=q*p;
+    if(h){h.avg=(h.avg*h.qty+p*q)/(h.qty+q);h.qty+=q}else acct.hold[sel]={qty:q,avg:p};
+  }else{
+    if(!h||q>h.qty)return say('You own '+(h?h.qty:0)+' shares of '+sel+'.',true);
+    acct.cash+=q*p;h.qty-=q;if(h.qty===0)delete acct.hold[sel];
+  }
+  acct.hist.unshift({side:side,s:sel,qty:q,price:p});acct.hist=acct.hist.slice(0,30);
+  say((side==='BUY'?'Bought ':'Sold ')+q+' '+sel+' at '+usd(p));save();render();
+}
+$('buy').onclick=function(){order('BUY')};
+$('sell').onclick=function(){order('SELL')};
+$('max').onclick=function(){$('q').value=Math.max(1,Math.floor(acct.cash/px[sel]))};
+$('reset').onclick=function(){if(confirm('Reset to $10,000 and clear all trades?')){acct={cash:START,hold:{},hist:[]};save();say('Account reset.');render()}};
+function pick(e){var r=e.target.closest('tr.row');if(r){sel=r.dataset.s;render()}}
+$('mkt').addEventListener('click',pick);
+$('mkt').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e)}});
+setInterval(function(){ST.forEach(function(x){step(x);ser[x.s].push(px[x.s]);ser[x.s].shift()});settle();render()},1500);
+var ac=null,mute=false;
+function tone(f,d,t,v,dl){if(mute)return;try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();var s=ac.currentTime+(dl||0),o=ac.createOscillator(),g=ac.createGain();o.type=t||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.1,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch(e){}}
+$('snd').onclick=function(){mute=!mute;this.textContent=mute?'Sound off':'Sound on'};
+function drawS(){var h=acct.ch||[],w=0,l=0,net=0;h.forEach(function(r){if(r.r==='win'){w++;net+=r.st*.9}else if(r.r==='loss'){l++;net-=r.st}});
+  var n=w+l;$('stats').innerHTML=h.length?'<p class="sub">Won '+w+' · Lost '+l+' · Win rate '+(n?Math.round(w/n*100):0)+'% · Net <b class="'+cls(net)+'">'+(net>=0?'+':'')+usd(net)+'</b></p><table><tbody>'+h.slice(0,6).map(function(r){return '<tr><td class="'+(r.r==='win'?'up':r.r==='loss'?'down':'')+'"><b>'+r.r.toUpperCase()+'</b></td><td>'+r.dir+' '+r.s+'</td><td class="num">$'+r.st+'</td></tr>'}).join('')+'</tbody></table>':'<div class="empty">Finished Rise / Fall contracts will show up here.</div>'}
+var eqh=[];
+$('vr').oninput=function(){var l=+this.value;$('vl').textContent=l;ST[ST.length-1].v=.0015*l};
+function drawC(){drawS();var c=acct.cts||[];$('ctr').innerHTML=c.length?c.map(function(k){return k.dir+' '+k.s+' · $'+k.st+' · entry '+usd(k.en)+' · '+k.left+' ticks left'}).join('<br>'):'No open contracts. Win pays 1.9x your stake.'}
+function openC(dir){
+  var st=parseFloat($('stk').value);
+  if(!(st>=1))return say('Stake must be at least $1.',true);
+  if(st>acct.cash)return say('Not enough cash for that stake.',true);
+  acct.cash-=st;acct.cts=acct.cts||[];acct.cts.push({s:sel,dir:dir,st:st,en:px[sel],left:parseInt($('tk').value,10)||5});save();
+  tone(440,.08);say(dir+' contract opened on '+sel+' at '+usd(px[sel]));render();drawC();
+}
+function settle(){
+  acct.cts=(acct.cts||[]).filter(function(c){
+    if(--c.left>0)return true;
+    var p=px[c.s],w=c.dir==='Even'?Math.round(p*100)%2===0:c.dir==='Odd'?Math.round(p*100)%2===1:c.dir==='Rise'?p>c.en:p<c.en;acct.ch=acct.ch||[];acct.ch.unshift({s:c.s,dir:c.dir,st:c.st,r:p===c.en?'flat':w?'win':'loss'});acct.ch=acct.ch.slice(0,50);
+    if(p===c.en){acct.cash+=c.st;say('Contract on '+c.s+' ended flat. Stake returned.')}
+    else if(w){acct.cash+=c.st*1.9;tone(660,.12,'triangle');tone(990,.2,'triangle',.1,.1);say('Won! '+c.s+' '+c.dir+' paid '+usd(c.st*1.9))}
+    else{tone(160,.3,'sawtooth',.08);say('Lost '+usd(c.st)+' on '+c.s+' '+c.dir+'.',true)}
+    return false;
+  });
+  save();
+  eqh.push(equity());if(eqh.length>120)eqh.shift();
+  $('eqc').innerHTML=eqh.length>1?'<polyline fill="none" stroke="var(--acc)" stroke-width="2" vector-effect="non-scaling-stroke" points="'+line(eqh,300,100)+'"/>':'';
+  drawC();
+}
+$('rise').onclick=function(){openC('Rise')};$('fall').onclick=function(){openC('Fall')};
+$('even').onclick=function(){openC('Even')};$('odd').onclick=function(){openC('Odd')};
+document.querySelectorAll('.qs').forEach(function(b){b.onclick=function(){$('stk').value=b.dataset.v==='half'?Math.max(1,Math.floor(acct.cash/2)):b.dataset.v}});
+drawC();
+var RATE=130,wm=$('wm'),wb=$('wb'),wmode='dep',wd={};
+function wshow(m){wmode=m;wd={};wform();wm.classList.remove('hidden');$('wph').focus()}
+function wform(err){
+  var dep=wmode==='dep';
+  $('wt').textContent=dep?'Deposit with M-Pesa':'Withdraw to M-Pesa';
+  wb.innerHTML='<p class="sub">Demo only. No real M-Pesa request is sent and no real money moves.</p><label class="sub" for="wph">M-Pesa number</label><input id="wph" class="wide" inputmode="numeric" placeholder="07XXXXXXXX" value="'+(wd.ph||'')+'"><label class="sub" for="wam">Amount (KES)</label><input id="wam" class="wide" inputmode="numeric" placeholder="e.g. 1000" value="'+(wd.am||'')+'"><p class="sub" id="wcv">Demo rate: 1 USD = '+RATE+' KES</p><p id="werr" class="down" role="alert">'+(err||'')+'</p><div class="btns"><button id="wcx">Cancel</button><button class="acc" id="wgo">Continue</button></div>';
+}
+wb.addEventListener('input',function(e){if(e.target.id==='wam'){var k=parseInt(e.target.value,10)||0;$('wcv').textContent='≈ '+usd(k/RATE)+' at the demo rate'}});
+wb.addEventListener('click',function(e){
+  var id=e.target.id;
+  if(id==='wcx'||id==='wdone')wm.classList.add('hidden');
+  else if(id==='wgo'){
+    wd.ph=$('wph').value.trim();wd.am=parseInt($('wam').value,10)||0;
+    if(!/^(07|01)\d{8}$/.test(wd.ph))return wform('Enter a valid number like 0712345678.');
+    if(wd.am<100)return wform('Minimum amount is KES 100.');
+    if(wmode==='wd'&&wd.am/RATE>acct.cash)return wform('That is more than your balance of '+usd(acct.cash)+'.');
+    wb.innerHTML='<p>Demo prompt: M-Pesa would ask you to confirm <b>KES '+wd.am.toLocaleString()+'</b> '+(wmode==='dep'?'from':'to')+' <b>'+wd.ph+'</b>.</p><div class="btns"><button id="wback">Back</button><button class="acc" id="wok">Confirm (demo)</button></div>';
+  }
+  else if(id==='wback')wform();
+  else if(id==='wok'){
+    e.target.disabled=true;e.target.textContent='Processing…';
+    setTimeout(function(){
+      var u=wd.am/RATE;acct.cash+=wmode==='dep'?u:-u;save();render();
+      wb.innerHTML='<p class="up"><b>'+(wmode==='dep'?'Deposit':'Withdrawal')+' complete (demo)</b></p><p class="sub">'+usd(u)+' · Ref DEMO'+Math.random().toString(36).slice(2,8).toUpperCase()+'</p><div class="btns"><button class="acc" id="wdone">Done</button></div>';
+    },1200);
+  }
+});
+$('dep').onclick=function(){wshow('dep')};
+$('wdr').onclick=function(){wshow('wd')};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')wm.classList.add('hidden')});
+render();
+})();
+</script>
+</body>
+</html>
